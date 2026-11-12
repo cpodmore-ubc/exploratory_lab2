@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title> History of Wildfires in B.C. </title>
+	<link href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.css" rel="stylesheet">
+	<script src="https://unpkg.com/pmtiles@4.5.0/dist/pmtiles.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+	<style> body { margin: 0; } 
+		#legend { position: absolute; left: 10px; bottom: 30px;
+			width: 220px; padding: 8px; background: white;  z-index: 10; }
+		#legend p { font-size: 11px; margin: 6px 0 0; } 
+		#controls { position: absolute; right: 10px; bottom: 30px; z-index: 10; } 
+		#map { position: absolute; inset: 0; } 
+		
+		.year-slider { 
+			position: absolute; 
+			left: 10 px; top: 60 px; 
+			width: 500 px; 
+			background: white; 
+			z-index: 10; 
+		} 
+		
+		.person { 
+			display: inline-block;
+			width: 10px;
+			height: 10px; 
+			background: #B71818
+		} 
+		
+		.lightning { 
+			display: inline-block; 
+			width: 10px; 
+			height: 10px; 
+			background: #844B9D
+		} 
+		
+		.unknown { 
+			display: inline-block; 
+			width: 10px; 
+			height: 10px; 
+			background: #A19F9D
+		} 
+		
+	</style>
+</head>
+<body>
+	<div id = "map"></div>
+	 <div id="legend"> Fire Causes
+		<p><span class = "person"></span> Person </p> 
+		<p><span class = "lightning"></span> Lightning </p> 
+		<p><span class = "unknown"></span> Unknown </p> 
+	 </div> 
+	 
+	<div id="controls" style="margin: 15px;">
+      <button id="showAllFiresButton"> Show All Wildfires </button>
+
+      <span style = "display: inline-block; width: 30px;"></span>
+      <input type = "text" id="highlightCauseTextEntry" placeholder = "e.g. Lightning"> 
+      <button id = "CauseButton"> Show Cause </button>
+    </div>
+
+    <div class = "year-slider">
+        <h2> British Columbia Wildfires, 1917-2025 </h2>
+        <label id = "FIRE_YEAR" for = "slider"></label>
+        <input id = "slider" type = "range" min = "1917" max = "2025" step = "1" value = "2000" />
+    </div>
+
+<script> 
+	const protocol = new pmtiles.Protocol();
+		maplibregl.addProtocol("pmtiles", protocol.tile);
+
+	const map = new maplibregl.Map({
+      container: 'map',
+      style: 'https://tiles.openfreemap.org/styles/liberty', 
+      center: [-126, 54.5],
+      zoom: 4,
+    });
+		
+	const PMTILES_URL = "pmtiles://https://cpodmore-ubc.github.io/cpodmore-web/wildfires_new.pmtiles"; 
+	
+	const p = new pmtiles.PMTiles(PMTILES_URL);
+	
+	protocol.add(p); 
+	
+	const wildfiresPaint = {
+        'fill-color': ['match', ['get', 'FIRE_CAUSE'],
+						'Person', '#B71818', 
+                         'Lightning', '#844B9D',
+                         'Unknown', '#A19F9D',
+                         '#000000'],
+        'fill-opacity': 0.8
+      };
+	
+	 function addFires() {
+        if (map.getSource('wildfires')) {
+          return; 
+        } 
+	
+	map.addSource('wildfires', {
+		type: 'vector',
+         url: PMTILES_URL,
+         attribution: 'Historical Wildfire Polygons: 1917-2025, BC Government Open Data Portal'
+    });
+	
+	map.addLayer({
+		id: 'wildfires-fill',
+        type: 'fill',
+        source: 'wildfires',
+		'source-layer': 'wildfires', 
+        paint: wildfiresPaint
+        });
+	} 
+	
+	function allFires() {
+        addFires();
+        map.setFilter('wildfires-fill', null);
+      }	
+		
+    function highlightCause() {
+      addFires();
+        const textEntry = document.getElementById('highlightCauseTextEntry');
+        const chosenCause = textEntry.value;
+			if (chosenCause === '') {
+			allFires();
+			return;
+        } 
+        map.setFilter('wildfires-fill', ['in', chosenCause, ['get', 'FIRE_CAUSE']]);
+    } 
+	  
+	map.on('load', () => {
+		const all = document.getElementById('showAllFiresButton'); 
+		all.addEventListener('click', allFires); 
+		const highlight = document.getElementById('CauseButton'); 
+		highlight.addEventListener('click', highlightCause); 
+		const yearslider = document.getElementById('slider'); 
+		const label = document.getElementById('FIRE_YEAR'); 
+		yearslider.addEventListener('input', () => {
+
+			const year = Number(yearslider.value);
+
+			label.textContent = year;
+
+			map.setFilter('wildfires-fill', ['==',
+				['to-number', ['get', 'FIRE_YEAR']], year
+			]);
+	});
+}); 
+</script>
+</body>
+</html>
