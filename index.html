@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta charset="utf-8">
-	<title> History of Wildfires in B.C. </title>
-	<link href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.css" rel="stylesheet">
+	<meta charset="utf-8"> 
+	<title> History of Wildfires in B.C. </title> 
+	<link href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.css" rel="stylesheet"> 
 	<script src="https://unpkg.com/pmtiles@4.5.0/dist/pmtiles.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
 	<style> body { margin: 0; } 
@@ -67,28 +67,31 @@
     </div>
 
 <script> 
-	const protocol = new pmtiles.Protocol();
-		maplibregl.addProtocol("pmtiles", protocol.tile);
+	const protocol = new pmtiles.Protocol(); 
+		maplibregl.addProtocol("pmtiles", protocol.tile); // The PMTiles source and protocol page told me to put these two lines in my code to have the PMtiles readable, so I did.
 
 	const map = new maplibregl.Map({
-      container: 'map',
-      style: 'https://tiles.openfreemap.org/styles/liberty', 
-      center: [-126, 54.5],
-      zoom: 4,
+      container: 'map', 
+      style: 'https://tiles.openfreemap.org/styles/liberty', // liberty basemap, I thought having a little colour on the basemap would be better than Positron, and my colours don't have 
+	  // enough pizzaz to show up with dark
+      center: [-126, 54.5], // centre of the province 
+      zoom: 4, // province wide zoom level, probably a little too zoomed out
     });
 		
-	const PMTILES_URL = "pmtiles://https://cpodmore-ubc.github.io/cpodmore-web/wildfires_new.pmtiles"; 
+	const PMTILES_URL = "pmtiles://https://cpodmore-ubc.github.io/cpodmore-web/wildfires_new.pmtiles"; // i decided to add the pmtiles as a source instead of using the maputnik style json
+	// because i thought i was messing up but it turns out i just encountered a known QGIS bug with pmtiles, so using tippecanoe fixed that. however i decided to keep my code the way it was instead
+	// of reverting back to the Maputnik json 
 	
-	const p = new pmtiles.PMTiles(PMTILES_URL);
+	const p = new pmtiles.PMTiles(PMTILES_URL); // pmtiles protocol page on maplibre gljs said to do this
 	
 	protocol.add(p); 
 	
 	const wildfiresPaint = {
-        'fill-color': ['match', ['get', 'FIRE_CAUSE'],
-						'Person', '#B71818', 
-                         'Lightning', '#844B9D',
-                         'Unknown', '#A19F9D',
-                         '#000000'],
+        'fill-color': ['match', ['get', 'FIRE_CAUSE'], 
+						'Person', '#B71818', // red for person
+                         'Lightning', '#844B9D', // purple for storm/Lightning
+                         'Unknown', '#A19F9D', // grey for unknown/ambiguity 
+                         '#000000'], // default colour is black
         'fill-opacity': 0.8
       };
 	
@@ -100,7 +103,7 @@
 	map.addSource('wildfires', {
 		type: 'vector',
          url: PMTILES_URL,
-         attribution: 'Historical Wildfire Polygons: 1917-2025, BC Government Open Data Portal'
+         attribution: 'Historical Wildfire Polygons: 1917-2025, BC Government Open Data Portal' // source is from the BC gov't open data portal 
     });
 	
 	map.addLayer({
@@ -117,7 +120,7 @@
         map.setFilter('wildfires-fill', null);
       }	
 		
-    function highlightCause() {
+    function highlightCause() { // taken from the Filtering 2 code example
       addFires();
         const textEntry = document.getElementById('highlightCauseTextEntry');
         const chosenCause = textEntry.value;
@@ -133,8 +136,8 @@
 		all.addEventListener('click', allFires); 
 		const highlight = document.getElementById('CauseButton'); 
 		highlight.addEventListener('click', highlightCause); 
-		const yearslider = document.getElementById('slider'); 
-		const label = document.getElementById('FIRE_YEAR'); 
+		const yearslider = document.getElementById('slider');  // taken from the Maplibre gljs time slider style page, also recognized the pattern as being similar to what i had above for the filter
+		const label = document.getElementById('FIRE_YEAR'); // FIRE_YEAR is the field in my PMtiles for the years
 		yearslider.addEventListener('input', () => {
 
 			const year = Number(yearslider.value);
